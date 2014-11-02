@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<RIMP>
+    <HSI>
+        <SPN>ProLiant DL385 G1</SPN>
+        <SBSN>ABCDEFG</SBSN>
+        <SP>1</SP>
+        <UUID>123456789</UUID>
+        <PRODUCTID>12345678-432</PRODUCTID>
+    </HSI>
+    <MP>
+        <ST>1</ST>
+        <PN>Integrated Lights-Out (iLO)</PN>
+        <FWRI>1.82</FWRI>
+        <HWRI>ASIC: 2</HWRI>
+        <SN>ILOABCDEFG</SN>
+        <UUID>ILO1234545</UUID>
+    </MP>
+</RIMP>
