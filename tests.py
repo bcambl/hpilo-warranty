@@ -1,9 +1,24 @@
 __author__ = 'bcambl'
 
-from requests.exceptions import ConnectionError
+import SimpleHTTPServer
+from BaseHTTPServer import HTTPServer
+import threading
 import unittest
 
 from hpilowar import *
+
+
+class TestServer(HTTPServer):
+    allow_reuse_address = True
+
+
+def start_testserver():
+    port = 8080
+    handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+    httpd = TestServer(("", port), handler)
+    httpd_thread = threading.Thread(target=httpd.serve_forever)
+    httpd_thread.setDaemon(True)
+    httpd_thread.start()
 
 
 class MyTestCase(unittest.TestCase):
@@ -14,6 +29,9 @@ class MyTestCase(unittest.TestCase):
         self.xmlreply = etree.parse(xmlreply)
         self.serverlist = read_serverlist(self.serverfile)
 
+    def tearDown(self):
+        pass
+
     def test_readserverlist(self):
         self.assertIsNotNone(self.serverlist)
         self.assertIsInstance(self.serverlist, list)
@@ -22,16 +40,10 @@ class MyTestCase(unittest.TestCase):
             self.assertEqual(server, server.strip('\n'))
 
     def test_getxmlreplydata(self):
-        try:
-            for server in self.serverlist:
-                self.assertIsInstance(
-                    get_xmlreplydata(server), etree._Element)
-        except ConnectionError:
-            print('Warning: Unable to test get_xmlreplydata.')
-            print("Run: 'python -m SimpleHTTPServer 8080' "
-                  "in project directory and re-run tests")
-            self.assertRaises(ConnectionError)
-
+        start_testserver()
+        for server in self.serverlist:
+            self.assertIsInstance(
+                get_xmlreplydata(server), etree._Element)
 
     def test_parsexmlreplydata(self):
         self.assertIsInstance(parse_xmlreplydata(self.xmlreply), dict)
