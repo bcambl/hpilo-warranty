@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<RIMP>
+    <HSI>
+        <SBSN>CZ10130050</SBSN>
+        <SPN>HP DL320 G6 E5502 SATA EU Svr/TV</SPN>
+        <UUID>519841CZ10130050</UUID>
+        <SP>1</SP>
+        <cUUID>33373436-3933-5A43-3332-343933334E4D</cUUID>
+        <VIRTUAL>
+            <STATE>Inactive</STATE>
+            <VID>
+                <BSN/>
+                <cUUID/>
+            </VID>
+        </VIRTUAL>
+        <PRODUCTID>519841-425</PRODUCTID>
+        <NICS>
+            <NIC>
+                <PORT>1</PORT>
+                <DESCRIPTION>N/A</DESCRIPTION>
+                <LOCATION>Embedded</LOCATION>
+                <MACADDR>a1:b2:c3:12:34:fc</MACADDR>
+                <IPADDR>N/A</IPADDR>
+                <STATUS>Unknown</STATUS>
+            </NIC>
+        </NICS>
+    </HSI>
+    <MP>
+        <ST>1</ST>
+        <PN>Integrated Lights-Out 3 (iLO 3)</PN>
+        <FWRI>1.65</FWRI>
+        <BBLK>01/08/2011</BBLK>
+        <HWRI>ASIC: 12</HWRI>
+        <SN>ILOCZ324933NM</SN>
+        <UUID>ILO647339CZ324933NM</UUID>
+        <SSO>0</SSO>
+        <PWRM>ERR</PWRM>
+    </MP>
+</RIMP>

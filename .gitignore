@@ -5,5 +5,10 @@ __pycache__/
 # Pycharm
 .idea/
 
+# Ipython Notebook
+*.ipynb
+
 # production ignores
 serverlist
+*.csv
+*.save

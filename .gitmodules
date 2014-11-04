@@ -1,0 +1,3 @@
+[submodule "hpisee"]
+	path = hpisee
+	url = https://github.com/bcambl/hpisee.git
