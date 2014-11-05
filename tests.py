@@ -1,3 +1,11 @@
+"""
+UnitTest Test Suite for hpilo-warranty
+--------------------------------------
+Notes:
+- Python SimpleHTTPServer is used for testing requests
+- Uses example files from the examples directory for testing
+"""
+#TODO: write better tests
 
 import SimpleHTTPServer
 from BaseHTTPServer import HTTPServer
@@ -36,8 +44,8 @@ def expect_exception(exception):
 class MyTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.serverfile = os.path.join(cwd, 'serverlist.example')
-        self.badserverfile = os.path.join(cwd, 'serverlist.fail')
+        self.serverfile = os.path.join(cwd, 'examples/serverlist.example')
+        self.badserverfile = os.path.join(cwd, 'examples/serverlist.fail')
         xmlreply = open(os.path.join(BASEDIR,
                                      'examples/warranty-ok.xml'))
         self.xmlreply = etree.parse(xmlreply)

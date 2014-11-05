@@ -1,14 +1,11 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
+# compiled
 *.py[cod]
 
-# Pycharm
+# development tools
 .idea/
-
-# Ipython Notebook
 *.ipynb
 
-# production ignores
+# project ignores
 serverlist
 *.csv
 *.save

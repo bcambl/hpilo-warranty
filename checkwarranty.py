@@ -3,6 +3,8 @@
 Collects Server information from HP iLO XMLReply and
 queries the HP ISEE API for warranty information.
 
+Please view README.md for install instructions
+
 """
 
 from datetime import datetime, timedelta
