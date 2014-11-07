@@ -62,7 +62,7 @@ class MyTestCase(unittest.TestCase):
             self.assertEqual(server, server.strip('\n'))
 
     @expect_exception(IOError)
-    def test_readserverlistioerror(self):
+    def test_readserverlist_ioerror(self):
         self.serverlist = read_serverlist(self.badserverfile)
 
     def test_getxmlreplydata(self):
@@ -71,16 +71,45 @@ class MyTestCase(unittest.TestCase):
             self.assertIsInstance(
                 get_xmlreplydata(server, ilourl), etree._Element)
 
+    def test_getxmlreplydata_badhost(self):
+        self.assertEqual(get_xmlreplydata('badhost', ilourl), 'badhost')
+
     @expect_exception(IOError)
-    def test_getxmlreplydataioerror(self):
+    def test_getxmlreplydata_ioerror(self):
         self.serverlist = read_serverlist(self.badserverfile)
         for server in self.serverlist:
             self.assertIsInstance(
                 get_xmlreplydata(server, ilourl), etree._Element)
 
     def test_parsexmlreplydata(self):
-        self.assertIsInstance(parse_xmlreplydata(self.xmlreply), dict)
-        self.assertTrue(len(parse_xmlreplydata(self.xmlreply)) == 2)
+        xmlreply = get_xmlreplydata('localhost', ilourl)
+        self.assertIsInstance(parse_xmlreplydata(xmlreply), dict)
+
+    def test_parsexmlreplydata_badhost(self):
+        xmlreply = get_xmlreplydata('badhost', ilourl)
+        self.assertIsInstance(parse_xmlreplydata(xmlreply), dict)
+        self.assertEqual(parse_xmlreplydata(xmlreply),
+                         {'serial': 'unknown', 'product': 'unknown'})
+
+    def test_parsexmlreplydata_noproduct(self):
+        xmlreplydata = get_xmlreplydata('localhost', ilourl)
+        remproduct = xmlreplydata.xpath('//PRODUCTID')
+        remproduct[0].getparent().remove(remproduct[0])
+        self.assertIsInstance(xmlreplydata, etree._Element)
+        self.assertEqual(parse_xmlreplydata(xmlreplydata),
+                         {'serial': 'CZ10130050', 'product': '519841-001'})
+
+    def test_guessagain_001(self):
+        config['server'] = None
+        config['entitlements'] = [('CZ10130050', '519841-001', 'EU',)]
+        guess = guess_again(config['entitlements'])
+        self.assertEqual(guess, [('CZ10130050', '519841-005', 'EU',)])
+
+    def test_guessagain_005(self):
+        config['server'] = None
+        config['entitlements'] = [('CZ10130050', '519841-005', 'EU',)]
+        guess = guess_again(config['entitlements'])
+        self.assertEqual(guess, [('CZ10130050', 'unknown', 'EU',)])
 
 
 if __name__ == '__main__':

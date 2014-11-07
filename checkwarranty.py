@@ -5,9 +5,11 @@ queries the HP ISEE API for warranty information.
 
 Please view README.md for install instructions
 
+Project Home: https://github.com/bcambl/hpilo-warranty
 """
 
 from datetime import datetime, timedelta
+from requests import ConnectionError
 import cPickle as pickle
 import argparse
 import csv
@@ -31,10 +33,14 @@ def read_serverlist(serverfile=None):
         raise e
 
 
-def get_xmlreplydata(ilo_ip=None, ilo_url=None):
-    response = requests.get('http://%s%s' % (ilo_ip, ilo_url))
-    response = etree.fromstring(response.text)
-    return response
+def get_xmlreplydata(ilo=None, ilo_url=None):
+    try:
+        response = requests.get('http://%s%s' % (ilo, ilo_url))
+        response = etree.fromstring(response.text)
+        return response
+    except ConnectionError:
+        print('Problems connecting to %s, please verify ip/hostname' % ilo)
+        return ilo
 
 
 def parse_xmlreplydata(data=None):
@@ -45,19 +51,23 @@ def parse_xmlreplydata(data=None):
     """
     #FIXME: Need alternative way to find the remaining 4 productid characters.
     parsed = {}
-    serialno = data.findall('.//HSI//SBSN')[0].text.strip()
-    uuidno = data.findall('.//HSI//UUID')[0].text.strip()
     try:
-        # This should succeed on newer Servers (DL Gen8+)
-        productno = data.findall('.//HSI//PRODUCTID')[0].text.strip()
-    except IndexError:
-        # Gen5/6/7 Servers do not provide ProductID via xmlreply.. lets guess!
-        productregex = '(.*)%s' % serialno
-        guessproduct = re.search(productregex, uuidno)
-        if guessproduct:
-            productno = guessproduct.group(1) + '-001'
-        else:
-            productno = 'unknown'
+        serialno = data.findall('.//HSI//SBSN')[0].text.strip()
+        uuidno = data.findall('.//HSI//UUID')[0].text.strip()
+        try:
+            # This should succeed on newer Servers (DL Gen8+)
+            productno = data.findall('.//HSI//PRODUCTID')[0].text.strip()
+        except IndexError:
+            # Gen5/6/7 Servers do not provide ProductID via xmlreply.
+            productregex = '(.*)%s' % serialno
+            guessproduct = re.search(productregex, uuidno)
+            if guessproduct:
+                productno = guessproduct.group(1) + '-001'
+            else:
+                productno = 'unknown'
+    except AttributeError:
+        serialno = 'unknown'
+        productno = 'unknown'
     parsed['serial'] = serialno
     parsed['product'] = productno
     return parsed
@@ -69,11 +79,16 @@ def guess_again(entitlements=None):
     guess. Again, this may vary and may not work for everyone!
     """
     #FIXME: Need alternative way to find the remaining 4 productid characters.
-    serial, prodno, country = entitlements
-    prodno = re.search('(.*)-001', prodno).group(1) + '-005'
-    config['entitlements'] = [serial, prodno, country]
-    set_registration()
-    war_parse(do_request('warranty'))
+    serial, prodno, country = entitlements[0]
+    reprodno = re.search('(.*)-001', prodno)
+    if reprodno:
+        reprodno = reprodno.group(1) + '-005'
+        config['entitlements'] = [(serial, reprodno, country)]
+    else:
+        # Lets stop guessing.. please check manually.
+        config['entitlements'] = [(serial, 'unknown', country)]
+    war_parse(config['server'])
+    return config['entitlements']
 
 
 def set_registration():
@@ -100,16 +115,25 @@ def set_registration():
             pass  # Re-use registration information
 
 
-def war_parse(server=None, data=None):
-    wstart = data.findall('.//OverallWarrantyStartDate')
-    wend = data.findall('.//OverallWarrantyEndDate')
-    if wstart:
-        with open(report_output, 'ab') as csvfile:
-            warwriter = csv.writer(csvfile, delimiter=',',
-                                   quoting=csv.QUOTE_MINIMAL)
-            warwriter.writerow([server, wstart[0].text, wend[0].text])
-    else:
-        guess_again(config['entitlements'])
+def war_parse(server=None):
+    if server:
+        if 'unknown' in config['entitlements'][0]:
+            with open(report_output, 'ab') as csvfile:
+                warwriter = csv.writer(csvfile, delimiter=',',
+                                       quoting=csv.QUOTE_MINIMAL)
+                warwriter.writerow([server, 'unknown', 'unknown'])
+        else:
+            data = do_request('warranty')
+            wstart = data.findall('.//OverallWarrantyStartDate')
+            wend = data.findall('.//OverallWarrantyEndDate')
+            if wstart:
+                with open(report_output, 'ab') as csvfile:
+                    warwriter = csv.writer(csvfile, delimiter=',',
+                                           quoting=csv.QUOTE_MINIMAL)
+                    warwriter.writerow([server, wstart[0].text, wend[0].text])
+                print('%s,%s,%s' % (server, wstart[0].text, wend[0].text))
+            else:
+                guess_again(config['entitlements'])
 
 
 def main():
@@ -128,11 +152,12 @@ def main():
     for server in serverlist:
         xmlreply = get_xmlreplydata(server, ilourl)
         querydata = parse_xmlreplydata(xmlreply)
+        config['server'] = server
         config['entitlements'] = [(querydata['serial'],
                                   querydata['product'],
                                   country)]
         set_registration()
-        war_parse(server, do_request('warranty'))
+        war_parse(config['server'])
 
 if __name__ == '__main__':
     main()
